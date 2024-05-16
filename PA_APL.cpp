@@ -3,6 +3,7 @@
 #include <sstream> // manipulasi string
 #include <fstream> // manipulasi file
 #include <vector> // array dinamis
+#include <algorithm> // Erase, Remove
 
 using namespace std;
 
@@ -60,13 +61,23 @@ struct struk_service{
     int harga_jasa;
 };
 
-// Data Sparepart
+// Data Sparepart dan struk
 struct sparepart_data{
     string nama_sparepart;
     string tipe_transmisi;
     int harga_sparepart;
     int kilometer;
     int stok_sparepart;
+};
+struct sparepart_pesanan{
+    string nama_sparepart;
+    int jumlah;
+    int harga;
+};
+struct struk_sparepart{
+    int id;
+    string user;
+    vector<sparepart_pesanan> pesanan;
 };
 
 // Variabel Global:
@@ -75,13 +86,14 @@ vector<motor_data> data_motor;
 vector<kondisi_manual> data_kondisi_manual;
 vector<kondisi_automatic> data_kondisi_automatic;
 vector<struk_service> data_struk_service;
+vector<struk_sparepart> data_struk_sparepart;
 vector<sparepart_data> data_sparepart;
 
-void clear(){
+void clear(){ // Membersihkan layar
     system("cls");
     return;
 }
-void pause(){
+void pause(){ // Program lanjut setelah user menekan tombol apapun
     system("pause");
     return;
 }
@@ -111,7 +123,7 @@ void read_csv_user(){ // membersihkan data vektor dan membaca data csv user ke d
     file.close();
     return;
 }
-void update_csv_user(){ // mengupdate data user kembali ke file user_log.csv
+void write_csv_user(){ // menulis data user kembali ke file user_log.csv
     ofstream file;
     file.open("Database/user_log.csv");
     if (!file) {
@@ -126,7 +138,7 @@ void update_csv_user(){ // mengupdate data user kembali ke file user_log.csv
     file.close();
     return;
 }
-void read_csv_motor(){// read csv motor, list_motor.csv, kondisi_motor_manual.csv, kondisi_motor_automatic.csv
+void read_csv_motor(){// Membaca csv motor, list_motor.csv, kondisi_motor_manual.csv, kondisi_motor_automatic.csv
     data_motor.clear();
     ifstream file;
     file.open("Database/list_motor.csv");
@@ -233,7 +245,8 @@ void read_csv_motor(){// read csv motor, list_motor.csv, kondisi_motor_manual.cs
     file.close();
     return;
 }
-void update_csv_motor(){// update_csv_motor dari vektor kembalikan ke csv, list_motor.csv, kondisi_motor_manual.csv, kondisi_motor_automatic.csv
+void write_csv_motor(){// Menulis dari vektor list_motor.csv, kondisi_motor_manual.csv, kondisi_motor_automatic.csv
+    // Membuka file csv data motor
     ofstream file;
     file.open("Database/list_motor.csv");
     if (!file) {
@@ -241,6 +254,7 @@ void update_csv_motor(){// update_csv_motor dari vektor kembalikan ke csv, list_
         pause();
         return;
     }
+    // Menulis data motor ke dalam file csv
     file << "Owner,Nama Motor,Warna,Transmisi,Plat,Jarak Tempuh(KM),Service" << endl;
     for (int i = 0; i < data_motor.size(); i++){
         file << data_motor[i].owner << "," << data_motor[i].nama_motor << "," << data_motor[i].warna_motor << "," << data_motor[i].transmisi << "," << data_motor[i].plat << "," << data_motor[i].jarak_tempuh << ",";
@@ -253,12 +267,14 @@ void update_csv_motor(){// update_csv_motor dari vektor kembalikan ke csv, list_
     }
     file.close();
 
+    // Membuka file csv data kondisi motor manual
     file.open("Database/kondisi_motor_manual.csv");
     if (!file) {
         cout << "Gagal membaca data kondisi motor manual (kondisi_motor_manual.csv)" << endl;
         pause();
         return;
     }
+    // Menulis data kondisi motor manual ke dalam file csv
     file << "Plat,Ban Belakang,Ban Depan,Busi,Gear,Kampas Kopling,Kampas Rem,Minyak Rem,Oli Mesin,Rantai" << endl;
     for (int i = 0; i < data_kondisi_manual.size(); i++){
         file << data_kondisi_manual[i].plat << "," << data_kondisi_manual[i].ban_belakang << "," << data_kondisi_manual[i].ban_depan << "," 
@@ -267,12 +283,14 @@ void update_csv_motor(){// update_csv_motor dari vektor kembalikan ke csv, list_
     }
     file.close();
 
+    // Membuka file csv data kondisi motor automatic
     file.open("Database/kondisi_motor_automatic.csv");
     if (!file) {
         cout << "Gagal membaca data kondisi motor automatic (kondisi_motor_automatic.csv)" << endl;
         pause();
         return;
     }
+    // Menulis data kondisi motor automatic ke dalam file csv
     file << "Plat,Ban Belakang,Ban Depan,Busi,Kampas Rem,Minyak Rem,Oli Gardan,Oli Mesin,Roller,Van Belt" << endl;
     for (int i = 0; i < data_kondisi_automatic.size(); i++){
         file << data_kondisi_automatic[i].plat << "," << data_kondisi_automatic[i].ban_belakang << "," << data_kondisi_automatic[i].ban_depan << "," 
@@ -282,7 +300,129 @@ void update_csv_motor(){// update_csv_motor dari vektor kembalikan ke csv, list_
     file.close();
     return;
 }
+void read_csv_sparepart(){ // Membaca data sparepart dari file  csv ke dalam vektor
+    data_sparepart.clear();
+    ifstream file;
+    file.open("Database/sparepart.csv");
+    if (!file) {
+        cout << "Gagal membaca data sparepart (sparepart.csv)" << endl;
+        pause();
+        return;
+    }
+    string baris, data;
+    getline(file, baris); // skip header
+    while(getline(file, baris)){
+        stringstream ss(baris);
+        sparepart_data temp;
+        getline(ss, temp.nama_sparepart, ',');
+        getline(ss, temp.tipe_transmisi, ',');
+        ss >> temp.harga_sparepart;
+        ss.ignore();
+        ss >> temp.kilometer;
+        ss.ignore();
+        ss >> temp.stok_sparepart;
+        data_sparepart.push_back(temp);
+    }
+    file.close();
+    return;
+}
+void write_csv_sparepart(){ // Menulis data sparepart dari vektor ke dalam file csv
+    ofstream file;
+    file.open("Database/sparepart.csv");
+    if (!file) {
+        cout << "Gagal membaca data sparepart (sparepart.csv)" << endl;
+        pause();
+        return;
+    }
+    file << "Nama Sparepart,Tipe Transmisi,Harga,Kilometer,Stok" << endl;
+    for (int i = 0; i < data_sparepart.size(); i++){
+        file << data_sparepart[i].nama_sparepart << "," << data_sparepart[i].tipe_transmisi << "," << data_sparepart[i].harga_sparepart << "," << data_sparepart[i].kilometer << "," << data_sparepart[i].stok_sparepart << endl;
+    }
+    file.close();
+    return;
+}
+void read_csv_service(){ // Membaca data service dari file csv ke dalam vektor
+    data_struk_service.clear();
+    ifstream file;
+    file.open("Database/service.csv");
+    if (!file) {
+        cout << "Gagal membaca data service (service.csv)" << endl;
+        pause();
+        return;
+    }
+    string baris, data;
+    getline(file, baris); // skip header
+    while(getline(file, baris)){
+        stringstream ss(baris);
+        struk_service temp;
+        ss >> temp.id;
+        ss.ignore();
+        while(getline(ss, data, ',')){
+            servis_data temp_servis;
+            temp_servis.nama_servis = data;
+            ss >> temp_servis.harga_servis;
+            ss.ignore();
+            temp.servis.push_back(temp_servis);
+        }
+        ss >> temp.harga_jasa;
+        data_struk_service.push_back(temp);
+    }
+    file.close();
+    return;
 
+}
+void write_csv_service(){ // Menulis data service dari vektor ke dalam file csv
+    ofstream file;
+    file.open("Database/service.csv");
+    if (!file) {
+        cout << "Gagal membaca data service (service.csv)" << endl;
+        pause();
+        return;
+    }
+    file << "ID,Servis,Harga Servis,Harga Jasa" << endl;
+    for (int i = 0; i < data_struk_service.size(); i++){
+        file << data_struk_service[i].id << ",";
+        for (int j = 0; j < data_struk_service[i].servis.size(); j++){
+            file << data_struk_service[i].servis[j].nama_servis << "," << data_struk_service[i].servis[j].harga_servis << ",";
+        }
+        file << data_struk_service[i].harga_jasa << endl;
+    }
+    file.close();
+    return;
+}
+// baca data struk service dan struk sparepart
+void read_csv_struk_service(){
+    data_struk_service.clear();
+    ifstream file;
+    // file yang dibuka adalah folder Database/struk/{id_struk}.csv
+    // sparepart,jumlah,harga
+    file.open("Database/struk_service.csv");
+    if (!file) {
+        cout << "Gagal membaca data struk service (struk_service.csv)" << endl;
+        pause();
+        return;
+    }
+    string baris, data;
+    getline(file, baris); // skip header
+    while(getline(file, baris)){
+        stringstream ss(baris);
+        struk_service temp;
+        ss >> temp.id;
+        ss.ignore();
+        while(getline(ss, data, ',')){
+            servis_data temp_servis;
+            temp_servis.nama_servis = data;
+            ss >> temp_servis.harga_servis;
+            ss.ignore();
+            temp.servis.push_back(temp_servis);
+        }
+        ss >> temp.harga_jasa;
+        data_struk_service.push_back(temp);
+    }
+    file.close();
+    return;
+
+}
 
 // Fungsi Login dan Register
 int login(int try_left, string *global_username, string *global_password){
@@ -464,7 +604,7 @@ void regist(){ // setelah register, data ditambahkan ke file user_log.csv dan di
     }
 
     // update file user_log.csv
-    update_csv_user();
+    write_csv_user();
     read_csv_user();
 
     cout << "Registrasi berhasil" << endl;
@@ -503,13 +643,21 @@ void add_motor(string username){
     // Input plat motor
     cout << "Plat Motor: ";
     getline(cin, plat_motor);
-    // Memastikan plat motor belum terdaftar
+    // Memastikan plat motor yang diinput belum terdaftar
+    string data_plat_temp;
+    string inp_plat_temp = plat_motor;
     for (int i = 0; i < data_motor.size(); i++){
-        if (data_motor[i].plat == plat_motor){
+        // Bandingkan tanpa memperhatikan spasi
+        data_plat_temp = data_motor[i].plat;
+        // Hapus spasi dari string plat
+        data_plat_temp.erase(remove(data_plat_temp.begin(), data_plat_temp.end(), ' '), data_plat_temp.end());
+        inp_plat_temp.erase(remove(inp_plat_temp.begin(), inp_plat_temp.end(), ' '), inp_plat_temp.end());
+        if (data_plat_temp.compare(inp_plat_temp) == 0){
             cout << "Plat motor sudah terdaftar" << endl;
             cout << "Plat Motor: ";
             getline(cin, plat_motor);
-            i = 0;
+            inp_plat_temp = plat_motor;
+            i = -1;
         }
     }
     // input jarak tempuh
@@ -519,7 +667,9 @@ void add_motor(string username){
         cout << "Invalid input. Silahkan masukkan angka." << endl;
         cin.clear();
         cin.ignore(999, '\n');
+        cout << "Jarak Tempuh (KM): ";
     }
+
     // menambahkan data motor ke vektor
     motor_data temp;
     temp.owner = username;
@@ -527,12 +677,13 @@ void add_motor(string username){
     temp.warna_motor = warna_motor;
     temp.transmisi = transmisi_motor;
     temp.plat = plat_motor;
+    temp.jarak_tempuh = jarak_tempuh;
     temp.service = false; // service default = false
     data_motor.push_back(temp);
 
     // Input kondisi
     cout << "=============================" << endl;
-    cout << "      Terakhir Servis(Km)" << endl;
+    cout << "    Terakhir Servis(Km)" << endl;
     cout << "=============================" << endl;
     // Input kondisi motor jika transmisi adalah automatic
     if (transmisi_motor == "automatic") {
@@ -597,7 +748,7 @@ void add_motor(string username){
         data_kondisi_automatic.push_back(kondisi);
     }
     // Input kondisi motor jika transmisi adalah manual
-    else if (transmisi_motor == "manual") {
+    if (transmisi_motor == "manual") {
         kondisi_manual kondisi;
         kondisi.plat = plat_motor;
         // Input kondisi motor manual
@@ -659,14 +810,620 @@ void add_motor(string username){
         data_kondisi_manual.push_back(kondisi);
     }
 
+    // Sort data motor dengan bubble sort, ascending berdasarkan plat
+    for (int i = 0; i < data_motor.size(); i++){
+        for (int j = 0; j < data_motor.size()-1; j++){
+            if (data_motor[j].plat > data_motor[j+1].plat){
+                motor_data temp = data_motor[j];
+                data_motor[j] = data_motor[j+1];
+                data_motor[j+1] = temp;
+            }
+        }
+    }
+    // Sort data kondisi manual  dengan bubble sort, ascending berdasarkan plat
+    for (int i = 0; i < data_kondisi_manual.size(); i++){
+        for (int j = 0; j < data_kondisi_manual.size()-1; j++){
+            if (data_kondisi_manual[j].plat > data_kondisi_manual[j+1].plat){
+                kondisi_manual temp = data_kondisi_manual[j];
+                data_kondisi_manual[j] = data_kondisi_manual[j+1];
+                data_kondisi_manual[j+1] = temp;
+            }
+        }
+    }
+    // Sort data kondisi automatic  dengan bubble sort, ascending berdasarkan plat
+    for (int i = 0; i < data_kondisi_automatic.size(); i++){
+        for (int j = 0; j < data_kondisi_automatic.size()-1; j++){
+            if (data_kondisi_automatic[j].plat > data_kondisi_automatic[j+1].plat){
+                kondisi_automatic temp = data_kondisi_automatic[j];
+                data_kondisi_automatic[j] = data_kondisi_automatic[j+1];
+                data_kondisi_automatic[j+1] = temp;
+            }
+        }
+    }
+
     // update csv motor
-    update_csv_motor();
+    write_csv_motor();
     read_csv_motor();
     cout << "Data motor berhasil ditambahkan" << endl;
     pause();
     clear();
     return;
 }
+
+void view_motor(string username){
+    cout << "=============================" << endl;
+    cout << "        DATA MOTOR" << endl;
+    cout << "=============================" << endl;
+    cout << "Username: " << username << endl;
+    cout << "----------------------------" << endl;
+    // tampilkan list motor yang dimiliki user, hanya nama motor(plat) saja
+    // Simpan plat motor yang dimiliki user ke dalam vector
+    vector<string> plat_vector;
+    int count = 1;
+    for (int i = 0; i < data_motor.size(); i++){
+        if (data_motor[i].owner == username){
+            cout << count << ". "; count++;
+            cout << "Nama Motor: " << data_motor[i].nama_motor;
+            if (data_motor[i].service){
+                cout << " (Service)";
+            }
+            cout << endl;
+            cout << "Plat: " << data_motor[i].plat << endl;
+            plat_vector.push_back(data_motor[i].plat);
+            cout << "Warna: " << data_motor[i].warna_motor << endl;
+            cout << "Transmisi: " << data_motor[i].transmisi << endl;
+            cout << "Jarak Tempuh: " << data_motor[i].jarak_tempuh << " KM" << endl;
+            cout <<"----------------------------"<< endl;
+        }
+    }
+    // View Menu
+    int pilih;
+    while (true) {
+        cout << "Menu View:" << endl;
+        cout << "1. Tampilkan Data Detail" << endl;
+        cout << "2. Back" << endl;
+        cout << "Pilih menu: ";
+        cin >> pilih;
+        if (cin.fail()) {
+            cin.clear();
+            cin.ignore(999, '\n');
+            cout << "Input tidak valid. Silahkan masukkan angka 1-2." << endl;
+            pause();
+            clear();
+            continue;
+        } else if (pilih >= 1 && pilih <= 2) {
+            // Tampilkan data detail motor
+            if (pilih == 1){
+                int pilih_motor;
+                while (true) {
+                    cout << "Pilih nomor motor untuk ditampilkan: ";
+                    cin >> pilih_motor;
+                    if (cin.fail()) {
+                        cin.clear();
+                        cin.ignore(999, '\n');
+                        cout << "Input tidak valid. Silahkan masukkan angka." << endl;
+                        pause();
+                        clear();
+                        continue;
+                    }
+                    break;
+                }
+                // Tampilkan data detail motor
+                if (pilih_motor >= 1 && pilih_motor <= count-1){
+                clear();
+                cout << "=============================" << endl;
+                cout << "     DATA MOTOR (DETAIL)" << endl;
+                cout << "=============================" << endl;
+                cout << "Username: " << username << endl;
+                cout << "----------------------------" << endl;
+                // Tampilkan data motor yang dipilih
+                    for (int i = 0; i < data_motor.size(); i++){ // cari data motor yang sesuai
+                        // jika data motor sesuai dengan username dan plat dari motor yang dipilih
+                        if (data_motor[i].owner == username && data_motor[i].plat == plat_vector[pilih_motor-1]){
+                            cout << "Nama Motor: " << data_motor[i].nama_motor << endl;
+                            cout << "Plat: " << data_motor[i].plat << endl;
+                            cout << "Warna: " << data_motor[i].warna_motor << endl;
+                            cout << "Transmisi: " << data_motor[i].transmisi << endl;
+                            cout << "Jarak Tempuh: " << data_motor[i].jarak_tempuh << " KM" << endl;
+                            cout << "Service: ";
+                            if (data_motor[i].service){
+                                cout << "Yes" << endl;
+                            }
+                            else{
+                                cout << "No" << endl;
+                            }
+                            cout << "----------------------------" << endl;
+                            // Tampilkan kondisi sparepart motor yang dipilih
+                            // di csv kondisi motor, dicari berdasarkan plat
+                            if (data_motor[i].transmisi == "manual"){
+                                for (int j = 0; j < data_kondisi_manual.size(); j++){
+                                    if (data_kondisi_manual[j].plat == data_motor[i].plat){
+                                        cout << "     Terakhir Servis(KM)" << endl;
+                                        cout << "----------------------------" << endl;
+                                        cout << "Ban Belakang: " << data_kondisi_manual[j].ban_belakang << endl;
+                                        cout << "Ban Depan: " << data_kondisi_manual[j].ban_depan << endl;
+                                        cout << "Busi: " << data_kondisi_manual[j].busi << endl;
+                                        cout << "Gear: " << data_kondisi_manual[j].gear << endl;
+                                        cout << "Kampas Kopling: " << data_kondisi_manual[j].kampas_kopling << endl;
+                                        cout << "Kampas Rem: " << data_kondisi_manual[j].kampas_rem << endl;
+                                        cout << "Minyak Rem: " << data_kondisi_manual[j].minyak_rem << endl;
+                                        cout << "Oli Mesin: " << data_kondisi_manual[j].oli_mesin << endl;
+                                        cout << "Rantai: " << data_kondisi_manual[j].rantai << endl;
+                                        cout << "----------------------------" << endl;
+                                    }
+                                }
+                            }
+                            if (data_motor[i].transmisi == "automatic"){
+                                for (int j = 0; j < data_kondisi_automatic.size(); j++){
+                                    if (data_kondisi_automatic[j].plat == data_motor[i].plat){
+                                        cout << "     Terakhir Servis(KM)" << endl;
+                                        cout << "----------------------------" << endl;
+                                        cout << "Ban Belakang: " << data_kondisi_automatic[j].ban_belakang << endl;
+                                        cout << "Ban Depan: " << data_kondisi_automatic[j].ban_depan << endl;
+                                        cout << "Busi: " << data_kondisi_automatic[j].busi << endl;
+                                        cout << "Kampas Rem: " << data_kondisi_automatic[j].kampas_rem << endl;
+                                        cout << "Minyak Rem: " << data_kondisi_automatic[j].minyak_rem << endl;
+                                        cout << "Oli Gardan: " << data_kondisi_automatic[j].oli_gardan << endl;
+                                        cout << "Oli Mesin: " << data_kondisi_automatic[j].oli_mesin << endl;
+                                        cout << "Roller: " << data_kondisi_automatic[j].roller << endl;
+                                        cout << "Van Belt: " << data_kondisi_automatic[j].van_belt << endl;
+                                        cout << "----------------------------" << endl;
+                                    }
+                                }
+                            }
+                            pause();
+                            clear();   
+                            return;
+                        }
+                    }
+                }
+            }
+            // Kembali ke menu user
+            if(pilih == 2){
+                clear();
+                return;
+            }
+        }
+        // Input tidak sesuai
+        else {
+            cout << "Menu tidak tersedia. Silahkan masukkan angka 1-2." << endl;
+            pause();
+        }
+    }
+        pause();
+        clear();
+        return;
+}
+
+void edit_motor(string username){
+    // vektor plat motor yang dimiliki user
+    vector<string> plat_vector;
+    // Tampilkan list motor yang dimiliki user
+    cout << "=============================" << endl;
+    cout << "       EDIT DATA MOTOR" << endl;
+    cout << "=============================" << endl;
+    cout << "Username: " << username << endl;
+    cout << "----------------------------" << endl;
+    // Menghitung jumlah motor yang dimiliki user
+    int count = 1;
+    for (int i = 0; i < data_motor.size(); i++){
+        if (data_motor[i].owner == username){
+            cout << count << ". "; count++;
+            cout << "Nama Motor: " << data_motor[i].nama_motor;
+            if (data_motor[i].service){
+                cout << " (Service)";
+            }
+            cout << endl;
+            cout << "Plat: " << data_motor[i].plat << endl;
+            plat_vector.push_back(data_motor[i].plat);
+            cout << "Warna: " << data_motor[i].warna_motor << endl;
+            cout << "Transmisi: " << data_motor[i].transmisi << endl;
+            cout << "Jarak Tempuh: " << data_motor[i].jarak_tempuh << " KM" << endl;
+            cout <<"----------------------------"<< endl;
+        }
+    }
+    // Pilih Nomor Motor yang akan diedit
+    int pilih_motor;
+    while (true) {
+        cout << "Pilih nomor motor untuk diedit: ";
+        cin >> pilih_motor;
+        if (cin.fail()) {
+            cin.clear();
+            cin.ignore(999, '\n');
+            cout << "Input tidak valid. Silahkan masukkan angka." << endl;
+            pause();
+            clear();
+            continue;
+        }
+        // Jika nomor yang dipilih sesuai dengan jumlah motor
+        if (pilih_motor >= 1 && pilih_motor <= count-1){ 
+            clear();
+            // Simpan plat dari motor yang dipilih
+            string plat_motor_temp = plat_vector[pilih_motor-1];
+
+            // Jika nomor yang dipilih sedang diservis, tidak boleh edit
+            for (int i = 0; i < data_motor.size(); i++){
+                if (data_motor[i].owner == username && data_motor[i].plat == plat_motor_temp){
+                    if (data_motor[i].service){
+                        clear();
+                        cout << "Motor sedang diservis, tidak bisa diedit" << endl;
+                        pause();
+                        clear();
+                        return;
+                    }
+                }
+            }
+
+            cout << "=============================" << endl;
+            cout << "       EDIT DATA MOTOR" << endl;
+            cout << "=============================" << endl;
+            cout << "Username: " << username << endl;
+            cout << "----------------------------" << endl;
+            // Tampilkan data singkat motor yang dipilih
+            for (int i = 0; i < data_motor.size(); i++){
+                if (data_motor[i].owner == username && data_motor[i].plat == plat_motor_temp){
+                    cout << "Nama Motor: " << data_motor[i].nama_motor << endl;
+                    cout << "Plat: " << data_motor[i].plat << endl;
+                    cout << "Warna: " << data_motor[i].warna_motor << endl;
+                    cout << "Transmisi: " << data_motor[i].transmisi << endl;
+                    cout << "Jarak Tempuh: " << data_motor[i].jarak_tempuh << " KM" << endl;
+                    cout << "Service: ";
+                    if (data_motor[i].service){
+                        cout << "Yes" << endl;
+                    }
+                    else{
+                        cout << "No" << endl;
+                    }
+                    cout << "----------------------------" << endl;
+                }
+            }
+
+            // Input data baru
+            for (int i = 0; i < data_motor.size(); i++){
+                if (data_motor[i].owner == username && data_motor[i].plat == plat_motor_temp){
+                    string nama_motor, warna_motor, transmisi_motor, plat_motor;
+                    int jarak_tempuh;
+                    cout << "Nama Motor: ";
+                    cin.ignore();
+                    getline(cin, nama_motor);
+                    // Input plat motor
+                    cout << "Plat Motor: ";
+                    getline(cin, plat_motor);
+                    /* Inputan plat boleh sama dengan yang sebelumnya
+                    tetapi tidak boleh sama dengan plat yang lain*/
+                    string data_plat_temp;
+                    string inp_plat_temp = plat_motor;
+                    for (int i = 0; i < data_motor.size(); i++){
+                        // Bandingkan tanpa memperhatikan spasi
+                        data_plat_temp = data_motor[i].plat;
+                        // Hapus spasi dari string plat
+                        data_plat_temp.erase(remove(data_plat_temp.begin(), data_plat_temp.end(), ' '), data_plat_temp.end());
+                        inp_plat_temp.erase(remove(inp_plat_temp.begin(), inp_plat_temp.end(), ' '), inp_plat_temp.end());
+                        if (data_plat_temp.compare(inp_plat_temp) == 0 && data_motor[i].plat != plat_motor_temp){
+                            cout << "Plat motor sudah terdaftar" << endl;
+                            cout << "Plat Motor: ";
+                            getline(cin, plat_motor);
+                            inp_plat_temp = plat_motor;
+                            i = -1;
+                        }
+                    }
+                    cout << "Warna Motor: ";
+                    getline(cin, warna_motor);
+                    cout << "Transmisi Motor: ";
+                    while (true){
+                        getline(cin, transmisi_motor);
+                        if (transmisi_motor == "manual" || transmisi_motor == "automatic"){
+                            break;
+                        }
+                        else{
+                            cout << "Transmisi motor hanya bisa manual atau automatic" << endl;
+                            cout << "Transmisi Motor: ";
+                        }
+                    }
+                    // Input jarak tempuh
+                    cout << "Jarak Tempuh Motor (KM): ";
+                    cin >> jarak_tempuh;
+                    while (cin.fail()) {
+                        cin.clear();
+                        cin.ignore(999, '\n');
+                        cout << "Input tidak valid. Silahkan masukkan angka." << endl;
+                        cout << "Jarak Tempuh Motor (KM): ";
+                        cin >> jarak_tempuh;
+                    }
+
+                    // Update Data Vektor Motor
+                    motor_data new_motor;
+                    new_motor.owner = username;
+                    new_motor.nama_motor = nama_motor;
+                    new_motor.warna_motor = warna_motor;
+                    new_motor.transmisi = transmisi_motor;
+                    new_motor.plat = plat_motor;
+                    new_motor.jarak_tempuh = jarak_tempuh;
+                    new_motor.service = false;
+                    
+                    // Hapus data motor yang dipilih dari vektor
+                    data_motor.erase(data_motor.begin() + i);
+
+                    // Hapus juga data kondisi motor 
+                    if (transmisi_motor == "manual"){
+                        for (int i = 0; i < data_kondisi_manual.size(); i++){
+                            if (data_kondisi_manual[i].plat == plat_motor_temp){
+                                data_kondisi_manual.erase(data_kondisi_manual.begin() + i);
+                            }
+                        }
+                    }
+                    if (transmisi_motor == "automatic"){
+                        for (int i = 0; i < data_kondisi_automatic.size(); i++){
+                            if (data_kondisi_automatic[i].plat == plat_motor_temp){
+                                data_kondisi_automatic.erase(data_kondisi_automatic.begin() + i);
+                            }
+                        }
+                    }
+                    // Tambahkan data vektor yang baru
+                    data_motor.push_back(new_motor);
+                    // Sort data motor dengan bubble sort, ascending berdasarkan plat
+                    for (int i = 0; i < data_motor.size(); i++){
+                        for (int j = 0; j < data_motor.size()-1; j++){
+                            if (data_motor[j].plat > data_motor[j+1].plat){
+                                motor_data temp = data_motor[j];
+                                data_motor[j] = data_motor[j+1];
+                                data_motor[j+1] = temp;
+                            }
+                        }
+                    }
+
+                    // input kondisi motor jika transmisi adalah automatic
+                    if (transmisi_motor == "automatic") {
+                        kondisi_automatic kondisi;
+                        kondisi.plat = plat_motor;
+                        // Input kondisi motor automatic
+                        cout << "Ban Belakang: ";
+                        while (!(cin >> kondisi.ban_belakang)) {
+                            cout << "Invalid Input, Tolong Masukkan Angka yang sesuai." << endl;
+                            cin.clear();
+                            cin.ignore(999, '\n');
+                        }
+                        cout << "Ban Depan: ";
+                        while (!(cin >> kondisi.ban_depan)) {
+                            cout << "Invalid Input, Tolong Masukkan Angka yang sesuai." << endl;
+                            cin.clear();
+                            cin.ignore(999, '\n');
+                        }
+                        cout << "Busi: ";
+                        while (!(cin >> kondisi.busi)) {
+                            cout << "Invalid Input, Tolong Masukkan Angka yang sesuai." << endl;
+                            cin.clear();
+                            cin.ignore(999, '\n');
+                        }
+                        cout << "Kampas Rem: ";
+                        while (!(cin >> kondisi.kampas_rem)) {
+                            cout << "Invalid Input, Tolong Masukkan Angka yang sesuai." << endl;
+                            cin.clear();
+                            cin.ignore(999, '\n');
+                        }
+                        cout << "Minyak Rem: ";
+                        while (!(cin >> kondisi.minyak_rem)) {
+                            cout << "Invalid Input, Tolong Masukkan Angka yang sesuai." << endl;
+                            cin.clear();
+                            cin.ignore(999, '\n');
+                        }
+                        cout << "Oli Gardan: ";
+                        while (!(cin >> kondisi.oli_gardan)) {
+                            cout << "Invalid Input, Tolong Masukkan Angka yang sesuai." << endl;
+                            cin.clear();
+                            cin.ignore(999, '\n');
+                        }
+                        cout << "Oli Mesin: ";
+                        while (!(cin >> kondisi.oli_mesin)) {
+                            cout << "Invalid Input, Tolong Masukkan Angka yang sesuai." << endl;
+                            cin.clear();
+                            cin.ignore(999, '\n');
+                        }
+                        cout << "Roller: ";
+                        while (!(cin >> kondisi.roller)) {
+                            cout << "Invalid Input, Tolong Masukkan Angka yang sesuai." << endl;
+                            cin.clear();
+                            cin.ignore(999, '\n');
+                        }
+                        cout << "Van Belt: ";
+                        while (!(cin >> kondisi.van_belt)) {
+                            cout << "Invalid Input, Tolong Masukkan Angka yang sesuai." << endl;
+                            cin.clear();
+                            cin.ignore(999, '\n');
+                        }
+                        // Tambahkan data vektor yang baru
+                        data_kondisi_automatic.push_back(kondisi);
+                        // Sort data kondisi automatic  dengan bubble sort, ascending berdasarkan plat
+                        for (int i = 0; i < data_kondisi_automatic.size(); i++){
+                            for (int j = 0; j < data_kondisi_automatic.size()-1; j++){
+                                if (data_kondisi_automatic[j].plat > data_kondisi_automatic[j+1].plat){
+                                    kondisi_automatic temp = data_kondisi_automatic[j];
+                                    data_kondisi_automatic[j] = data_kondisi_automatic[j+1];
+                                    data_kondisi_automatic[j+1] = temp;
+                                }
+                            }
+                        }
+                    }
+
+                    // Input kondisi motor jika transmisi adalah manual
+                    if (transmisi_motor == "manual") {
+                        kondisi_manual kondisi;
+                        kondisi.plat = plat_motor;
+                        // Input kondisi motor manual
+                        cout << "Ban Belakang: ";
+                        while (!(cin >> kondisi.ban_belakang)) {
+                            cout << "Invalid Input, Tolong Masukkan Angka yang sesuai." << endl;
+                            cin.clear();
+                            cin.ignore(999, '\n');
+                        }
+                        cout << "Ban Depan: ";
+                        while (!(cin >> kondisi.ban_depan)) {
+                            cout << "Invalid Input, Tolong Masukkan Angka yang sesuai." << endl;
+                            cin.clear();
+                            cin.ignore(999, '\n');
+                        }
+                        cout << "Busi: ";
+                        while (!(cin >> kondisi.busi)) {
+                            cout << "Invalid Input, Tolong Masukkan Angka yang sesuai." << endl;
+                            cin.clear();
+                            cin.ignore(999, '\n');
+                        }
+                        cout << "Gear: ";
+                        while (!(cin >> kondisi.gear)) {
+                            cout << "Invalid Input, Tolong Masukkan Angka yang sesuai." << endl;
+                            cin.clear();
+                            cin.ignore(999, '\n');
+                        }
+                        cout << "Kampas Kopling: ";
+                        while (!(cin >> kondisi.kampas_kopling)) {
+                            cout << "Invalid Input, Tolong Masukkan Angka yang sesuai." << endl;
+                            cin.clear();
+                            cin.ignore(999, '\n');
+                        }
+                        cout << "Kampas Rem: ";
+                        while (!(cin >> kondisi.kampas_rem)) {
+                            cout << "Invalid Input, Tolong Masukkan Angka yang sesuai." << endl;
+                            cin.clear();
+                            cin.ignore(999, '\n');
+                        }
+                        cout << "Minyak Rem: ";
+                        while (!(cin >> kondisi.minyak_rem)) {
+                            cout << "Invalid Input, Tolong Masukkan Angka yang sesuai." << endl;
+                            cin.clear();
+                            cin.ignore(999, '\n');
+                        }
+                        cout << "Oli Mesin: ";
+                        while (!(cin >> kondisi.oli_mesin)) {
+                            cout << "Invalid Input, Tolong Masukkan Angka yang sesuai." << endl;
+                            cin.clear();
+                            cin.ignore(999, '\n');
+                        }
+                        cout << "Rantai: ";
+                        while (!(cin >> kondisi.rantai)) {
+                            cout << "Invalid Input, Tolong Masukkan Angka yang sesuai." << endl;
+                            cin.clear();
+                            cin.ignore(999, '\n');
+                        }
+                        // Tambahkan data vektor yang baru
+                        data_kondisi_manual.push_back(kondisi);
+                        // Sort data kondisi manual  dengan bubble sort, ascending berdasarkan plat
+                        for (int i = 0; i < data_kondisi_manual.size(); i++){
+                            for (int j = 0; j < data_kondisi_manual.size()-1; j++){
+                                if (data_kondisi_manual[j].plat > data_kondisi_manual[j+1].plat){
+                                    kondisi_manual temp = data_kondisi_manual[j];
+                                    data_kondisi_manual[j] = data_kondisi_manual[j+1];
+                                    data_kondisi_manual[j+1] = temp;
+                                }
+                            }
+                        }
+                    }
+
+                    // Update csv data motor
+                    write_csv_motor();
+                    read_csv_motor();
+                    cout << "Data motor berhasil ditambahkan!" << endl;
+                    pause();
+                    clear();
+                    return;
+                }
+            }
+        }
+        // Input tidak sesuai
+        else {
+            cout << "Pilihan tidak tersedia. Silahkan masukkan nomor yang sesuai" << endl;
+            pause();
+            clear();
+        }
+    }
+}
+
+void hapus_motor(string username){
+    vector<string> plat_vector;
+    // Tampilkan list motor yang dimiliki user
+    cout << "=============================" << endl;
+    cout << "       HAPUS DATA MOTOR" << endl;
+    cout << "=============================" << endl;
+    cout << "Username: " << username << endl;
+    cout << "----------------------------" << endl;
+    // Menghitung jumlah motor yang dimiliki user
+    int count = 1;
+    for (int i = 0; i < data_motor.size(); i++){
+        if (data_motor[i].owner == username){
+            cout << count << ". "; count++;
+            cout << "Nama Motor: " << data_motor[i].nama_motor;
+            if (data_motor[i].service){
+                cout << " (Service)";
+            }
+            cout << endl;
+            cout << "Plat: " << data_motor[i].plat << endl;
+            plat_vector.push_back(data_motor[i].plat);
+            cout << "Warna: " << data_motor[i].warna_motor << endl;
+            cout << "Transmisi: " << data_motor[i].transmisi << endl;
+            cout << "Jarak Tempuh: " << data_motor[i].jarak_tempuh << " KM" << endl;
+            cout <<"----------------------------"<< endl;
+        }
+    }
+    // Pilih Nomor Motor yang akan dihapus
+    int pilih_motor;
+    while (true) {
+        cout << "Pilih nomor motor untuk dihapus: ";
+        cin >> pilih_motor;
+        if (cin.fail()) {
+            cin.clear();
+            cin.ignore(999, '\n');
+            cout << "Input tidak valid. Silahkan masukkan angka." << endl;
+            pause();
+            clear();
+            continue;
+        }
+        // Jika nomor yang dipilih sesuai dengan jumlah motor
+        if (pilih_motor >= 1 && pilih_motor <= count-1){ 
+            clear();
+            // Simpan plat dari motor yang dipilih
+            string plat_motor_temp = plat_vector[pilih_motor-1];
+
+            // Jika nomor yang dipilih sedang diservis, tidak boleh hapus
+            for (int i = 0; i < data_motor.size(); i++){
+                if (data_motor[i].owner == username && data_motor[i].plat == plat_motor_temp){
+                    if (data_motor[i].service){
+                        clear();
+                        cout << "Motor sedang diservis, tidak bisa dihapus" << endl;
+                        pause();
+                        clear();
+                        return;
+                    }
+                }
+            }
+            // Hapus data motor yang dipilih dari vektor
+            for (int i = 0; i < data_motor.size(); i++){
+                if (data_motor[i].owner == username && data_motor[i].plat == plat_motor_temp){
+                    data_motor.erase(data_motor.begin() + i);
+                }
+            }
+            // Hapus juga data kondisi motor
+            for (int i = 0; i < data_kondisi_manual.size(); i++){
+                if (data_kondisi_manual[i].plat == plat_motor_temp){
+                    data_kondisi_manual.erase(data_kondisi_manual.begin() + i);
+                }
+            }
+            for (int i = 0; i < data_kondisi_automatic.size(); i++){
+                if (data_kondisi_automatic[i].plat == plat_motor_temp){
+                    data_kondisi_automatic.erase(data_kondisi_automatic.begin() + i);
+                }
+            }
+
+            // Update csv data motor
+            write_csv_motor();
+            read_csv_motor();
+            cout << "Data motor berhasil dihapus!" << endl;
+            pause();
+            clear();
+            return;
+        }
+    }
+}
+
+// Fungsi-fungsi menu
 int menu_awal(){
     int pilih;
     while (true) {
@@ -693,31 +1450,31 @@ int menu_awal(){
         }
     }
 }
-void menu_user(string global_username){
+
+// Menu-menu user
+void menu_motor(string global_username){
     int pilih;
     while (true) {
         cout << "=============================" << endl;
-        cout << "          MENU USER" << endl;
-        // Tampilkan username saat ini
+        cout << "        MENU DATA MOTOR" << endl;
         cout << "=============================" << endl;
-        cout << "Username : " << global_username << endl;
+        cout << "Username: " << global_username << endl;
+        cout << "----------------------------" << endl;
         cout << "1. Tambah Data Motor" << endl;
-        cout << "2. Tampilkan Data Motor" << endl;
+        cout << "2. Lihat Data Motor" << endl;
         cout << "3. Edit Data Motor" << endl;
-        cout << "4. Edit Data Akun" << endl;
-        cout << "5. Jadwal Perawatan Motor" << endl;
-        cout << "6. Pelayanan Service Motor" << endl;
-        cout << "7. Pemesanan Sparepart Motor" << endl;
-        cout << "8. Log Out" << endl;
+        cout << "4. Hapus Data Motor" << endl;
+        cout << "5. Kembali (Menu User)" << endl;
+        cout << "----------------------------" << endl;
         cout << "Pilih menu: ";
         cin >> pilih;
         if (cin.fail()) {
             cin.clear();
             cin.ignore(999, '\n');
-            cout << "Input tidak valid. Silahkan masukkan angka 1-8." << endl;
+            cout << "Input tidak valid. Silahkan masukkan angka 1-5." << endl;
             pause();
             clear();
-        } else if (pilih >= 1 && pilih <= 8) {
+        } else if (pilih >= 1 && pilih <= 5) {
             switch (pilih)
             {
             case 1:
@@ -726,49 +1483,45 @@ void menu_user(string global_username){
                 add_motor(global_username);
                 break;
             case 2:
-                // Tampilkan Data Motor
+                // Lihat Data Motor
+                clear();
+                view_motor(global_username);
                 break;
             case 3:
                 // Edit Data Motor
+                clear();
+                edit_motor(global_username);
                 break;
             case 4:
-                // Edit Data Akun
+                // Hapus Data Motor
+                clear();
+                hapus_motor(global_username);
                 break;
             case 5:
-                // Jadwal Perawatan Motor
-                break;
-            case 6:
-                // Pelayanan Service Motor
-                break;
-            case 7:
-                // Pemesanan Sparepart Motor
-                break;
-            case 8:
-                // Log Out
+                // Kembali (Menu User)
                 return;
                 break;
             }
         } else {
-            cout << "Menu tidak tersedia. Silahkan masukkan angka 1-8." << endl;
+            cout << "Menu tidak tersedia. Silahkan masukkan angka 1-5." << endl;
             pause();
             clear();
         }
     }
 }
 
-// Bagian menu Admin
-
-void menu_admin(string global_username){
+int menu_data_akun(string global_username){
     int pilih;
     while (true) {
         cout << "=============================" << endl;
-        cout << "          MENU ADMIN" << endl;
+        cout << "        MENU DATA AKUN" << endl;
         cout << "=============================" << endl;
-
-        cout << "1. Edit Data Admin" << endl;
-        cout << "2. Layanan Servis" << endl;
-        cout << "3. Toko Sparepart" << endl;
-        cout << "4. Log Out" << endl;
+        cout << "Username: " << global_username << endl;
+        cout << "----------------------------" << endl;
+        cout << "1. Edit Data Akun" << endl;
+        cout << "2. Hapus Data Akun" << endl;
+        cout << "3. Kembali (Menu User)" << endl;
+        cout << "----------------------------" << endl;
         cout << "Pilih menu: ";
         cin >> pilih;
         if (cin.fail()) {
@@ -781,17 +1534,207 @@ void menu_admin(string global_username){
             switch (pilih)
             {
             case 1:
-                // Edit Data Admin
+                // Edit Data Akun
                 break;
             case 2:
-                // Layanan Servis
+                // Hapus Data Akun
+                return 1; // Logout akun
                 break;
             case 3:
-                // Toko Sparepart
+                // Kembali (Menu User)
+                return 0; // Tidak Logout
                 break;
             }
         } else {
             cout << "Menu tidak tersedia. Silahkan masukkan angka 1-3." << endl;
+            pause();
+            clear();
+        }
+    }
+
+}
+
+void menu_perawatan(string global_username){
+    /* 
+    1. Tampilkan List Motor yang dimiliki user
+    2. Pilih motor yang akan ditunjukkan jadwal perawatan
+    3. Tampilkan jadwal perawatan per sparepart
+    (jadwal perawatan ini dihitung dengan: 
+    - jarak tempuh motor yang dimiliki
+    - terakhir servir sparepart motor yang dimiliki
+    - jadwal rutin servis untuk sparepart yang ada pada database)
+    ex : 
+
+    > Servis yang akan datang
+    Ban Belakang harus disercis setelah 5000 KM
+    > Servis yang telat
+    Telat 2000 KM untuk servis oli mesin
+         
+    */
+}  
+
+void menu_user_servis(string global_username){
+    /* 
+    Menu :
+    a. Pesan Jasa Servis Motor
+    1. Tampilkan List Motor yang dimiliki user
+    2. Pilih motor yang akan diservis
+    3. Tunggu
+    4. Admin akan melakukan servis (menu admin)
+    5. Admin akan mengupdate data servis pada sparepart motor yang dipilih (menu admin)
+    6. Struk servis akan disimpan di database
+    7. Motor sudah selesai diservis
+
+    b. tampilkan history servis struk
+    1. Tampilkan List struk, ascended dari id terkecil
+    2. Pilih untuk menampilkan detail struk, atau kembali (menu user_servis)
+    */
+}
+
+void menu_user_sparepart(string global_username){
+    /* 
+    Menu :
+    a. Pesan Sparepart
+    1. Tampilkan List Sparepart yang tersedia
+    2. Pilih sparepart yang akan dipesan
+    3. Input jumlah sparepart yang akan dipesan
+    4. Struk pemesanan ditampilkan dan disimpan di database
+    5. kembali (menu user)
+
+    b. tampilkan history pesanan sparepart
+    1. Tampilkan List pesanan, ascended dari id terkecil
+    2. Pilih untuk menampilkan detail pesanan, atau kembali (menu user_sparepart)
+    */
+}
+
+void menu_user(string global_username){
+    int pilih;
+    while (true) {
+        cout << "=============================" << endl;
+        cout << "          MENU USER" << endl;
+        cout << "=============================" << endl;
+        cout << "Username : " << global_username << endl;
+        cout << "----------------------------" << endl;
+        cout << "1. Menu Data Motor" << endl;
+        cout << "2. Menu Data Akun" << endl;
+        cout << "3. Jadwal Perawatan Motor" << endl;
+        cout << "4. Jasa Service Motor" << endl;
+        cout << "5. Pemesanan Sparepart Motor" << endl;
+        cout << "6. Log Out" << endl;
+        cout << "----------------------------" << endl;
+        cout << "Pilih menu: ";
+        cin >> pilih;
+        if (cin.fail()) {
+            cin.clear();
+            cin.ignore(999, '\n');
+            cout << "Input tidak valid. Silahkan masukkan angka 1-6." << endl;
+            pause();
+            clear();
+        } else if (pilih >= 1 && pilih <= 6) {
+            switch (pilih)
+            {
+            case 1:
+                // Menu Data Motor
+                clear();
+                menu_motor(global_username);
+                break;
+            case 2:
+                // Menu Data Akun
+                clear();
+                menu_data_akun(global_username);
+                break;
+            case 3:
+                // Jadwal Perawatan Motor
+                clear();
+                menu_perawatan(global_username);
+                break;
+            case 4:
+                // Jasa Service Motor
+                clear();
+                menu_user_servis(global_username);
+                break;
+            case 5:
+                // Pemesanan Sparepart Motor
+                menu_user_sparepart(global_username);
+                clear();
+                break;
+            case 6:
+                // Log Out
+                return;
+                break;
+            }
+        } else {
+            cout << "Menu tidak tersedia. Silahkan masukkan angka 1-6." << endl;
+            pause();
+            clear();
+        }
+    }
+}
+
+// Menu-Menu Admin
+void edit_data_admin(string global_username){
+    /* 
+    1. Tampilkan Username dan Password yang ada
+    2. Input Username dan Pasword baru
+    */
+}
+
+void admin_servis(string global_username){
+    /* 
+    1. Tampilkan List Motor yang dimiliki user
+    2. Pilih motor yang akan diservis
+    3. Tunggu
+    4. Admin akan melakukan servis
+    5. Admin akan mengupdate data servis pada sparepart motor yang dipilih
+    6. Struk servis akan diberikan kepada user, dan disimpan di database
+    7. Motor sudah selesai diservis
+    */
+}
+
+void admin_sparepart(string global_username){
+    /* 
+    1. Tampilkan List Sparepart yang tersedia
+    2. Tambah Sparepart
+    3. Edit Sparepart
+    4. Hapus Sparepart
+    */
+}
+
+void menu_admin(string global_username){
+    int pilih;
+    while (true) {
+        cout << "=============================" << endl;
+        cout << "          MENU ADMIN" << endl;
+        cout << "=============================" << endl;
+        cout << "Username : " << global_username << endl;
+        cout << "----------------------------" << endl;
+        cout << "1. Edit Data Admin" << endl;
+        cout << "2. Layanan Servis" << endl;
+        cout << "3. Toko Sparepart" << endl;
+        cout << "4. Log Out" << endl;
+        cout << "Pilih menu: ";
+        cin >> pilih;
+        if (cin.fail()) {
+            cin.clear();
+            cin.ignore(999, '\n');
+            cout << "Input tidak valid. Silahkan masukkan angka 1-4." << endl;
+            pause();
+            clear();
+        } else if (pilih >= 1 && pilih <= 4) {
+            switch (pilih)
+            {
+            case 1:
+                // Edit Data Admin
+                break;
+            case 2:
+                // Layanan Servis (Admin)
+                break;
+            case 3:
+                // Toko Sparepart (Admin)
+                break;
+            }
+        } else {
+            cout << "Menu tidak tersedia. Silahkan masukkan angka 1-4." << endl;
             pause();
             clear();
         }
