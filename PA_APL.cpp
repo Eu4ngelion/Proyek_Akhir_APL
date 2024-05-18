@@ -2111,104 +2111,13 @@ void menu_admin(string global_username){
 
 // Fungsi Main
 int main(){
-    //tes write file
-    write_csv_user();
-    write_csv_motor();
-    write_csv_struk_servis();
-    write_csv_struk_sparepart();
-    write_csv_list_sparepart();
-
-
-
     // Membaca data csv di awal
     read_csv_user();
     read_csv_motor();
     read_csv_struk_servis();
     read_csv_struk_sparepart();
     read_csv_list_sparepart();
-
-    // tes output semua data vektor 
-    // cout << "Data User:" << endl;
-    // for (const auto& user : data_user) {
-    //     cout << "Username: " << user.username << endl;
-    //     cout << "Password: " << user.password << endl;
-    //     cout << "Telepon: " << user.telepon << endl;
-    //     cout << "Alamat: " << user.address << endl;
-    //     cout << "------------------------" << endl;
-    // }
-    // cout << "Data Motor:" << endl;
-    // for (const auto& motor : data_motor) {
-    //     cout << "Pemilik: " << motor.owner << endl;
-    //     cout << "Nama Motor: " << motor.nama_motor << endl;
-    //     cout << "Warna Motor: " << motor.warna_motor << endl;
-    //     cout << "Transmisi: " << motor.transmisi << endl;
-    //     cout << "Plat: " << motor.plat << endl;
-    //     cout << "Jarak Tempuh: " << motor.jarak_tempuh << endl;
-    //     cout << "Service: " << (motor.service ? "Yes" : "No") << endl;
-    //     cout << "------------------------" << endl;
-    // }
-    // cout << "Data Kondisi Manual:" << endl;
-    // for (const auto& kondisi : data_kondisi_manual) {
-    //     cout << "Plat: " << kondisi.plat << endl;
-    //     cout << "Ban Belakang: " << kondisi.ban_belakang << endl;
-    //     cout << "Ban Depan: " << kondisi.ban_depan << endl;
-    //     cout << "Busi: " << kondisi.busi << endl;
-    //     cout << "Gear: " << kondisi.gear << endl;
-    //     cout << "Kampas Kopling: " << kondisi.kampas_kopling << endl;
-    //     cout << "Kampas Rem: " << kondisi.kampas_rem << endl;
-    //     cout << "Minyak Rem: " << kondisi.minyak_rem << endl;
-    //     cout << "Oli Mesin: " << kondisi.oli_mesin << endl;
-    //     cout << "Rantai: " << kondisi.rantai << endl;
-    //     cout << "------------------------" << endl;
-    // }
-    // cout << "Data Kondisi Automatic:" << endl;
-    // for (const auto& kondisi : data_kondisi_automatic) {
-    //     cout << "Plat: " << kondisi.plat << endl;
-    //     cout << "Ban Belakang: " << kondisi.ban_belakang << endl;
-    //     cout << "Ban Depan: " << kondisi.ban_depan << endl;
-    //     cout << "Busi: " << kondisi.busi << endl;
-    //     cout << "Kampas Rem: " << kondisi.kampas_rem << endl;
-    //     cout << "Minyak Rem: " << kondisi.minyak_rem << endl;
-    //     cout << "Oli Gardan: " << kondisi.oli_gardan << endl;
-    //     cout << "Oli Mesin: " << kondisi.oli_mesin << endl;
-    //     cout << "Roller: " << kondisi.roller << endl;
-    //     cout << "Van Belt: " << kondisi.van_belt << endl;
-    //     cout << "------------------------" << endl;
-    // }
-    // cout << "Data Struk Service:" << endl;
-    // for (const auto& struk : data_struk_service) {
-    //     cout << "ID: " << struk.id << endl;
-    //     cout << "Plat: " << struk.plat << endl;
-    //     cout << "Status: " << struk.status << endl;
-    //     cout << "Servis:" << endl;
-    //     for (const auto& servis : struk.servis) {
-    //         cout << "Nama Servis: " << servis.nama_servis << endl;
-    //         cout << "Harga Servis: " << servis.harga_servis << endl;
-    //     }
-    //     cout << "------------------------" << endl;
-    // }
-    // cout << "Data Struk Sparepart:" << endl;
-    // for (const auto& struk : data_struk_sparepart) {
-    //     cout << "ID: " << struk.id << endl;
-    //     cout << "User: " << struk.user << endl;
-    //     cout << "Pesanan:" << endl;
-    //     for (const auto& pesanan : struk.pesanan) {
-    //         cout << "Nama Sparepart: " << pesanan.nama_sparepart << endl;
-    //         cout << "Jumlah: " << pesanan.jumlah << endl;
-    //         cout << "Harga: " << pesanan.harga << endl;
-    //     }
-    //     cout << "------------------------" << endl;
-    // }
-    // cout << "Data List Sparepart:" << endl;
-    // for (const auto& sparepart : data_list_sparepart) {
-    //     cout << "Nama Sparepart: " << sparepart.nama_sparepart << endl;
-    //     cout << "Tipe Transmisi: " << sparepart.tipe_transmisi << endl;
-    //     cout << "Harga Sparepart: " << sparepart.harga_sparepart << endl;
-    //     cout << "Kilometer: " << sparepart.kilometer << endl;
-    //     cout << "Stok Sparepart: " << sparepart.stok_sparepart << endl;
-    //     cout << "------------------------" << endl;
-    // }
-    // pause();
+    
 
     // Variabel lokal main
     string global_username, global_password;
