@@ -55,13 +55,16 @@ struct servis_data{
     string nama_servis;
     int harga_servis;
 };
-struct struk_service{
+struct struk_servis{
     int id;
+    string username;
+    string plat;
+    string status_servis;
+    string status_akun;
     vector<servis_data> servis;
-    int harga_jasa;
 };
 
-// Data Sparepart dan struk
+// Data Sparepart dan Struk
 struct sparepart_data{
     string nama_sparepart;
     string tipe_transmisi;
@@ -76,7 +79,10 @@ struct sparepart_pesanan{
 };
 struct struk_sparepart{
     int id;
-    string user;
+    string username;
+    string telepon;
+    string address;
+    string status_akun;
     vector<sparepart_pesanan> pesanan;
 };
 
@@ -85,9 +91,9 @@ vector<user_data> data_user;
 vector<motor_data> data_motor;
 vector<kondisi_manual> data_kondisi_manual;
 vector<kondisi_automatic> data_kondisi_automatic;
-vector<struk_service> data_struk_service;
+vector<struk_servis> data_struk_service;
 vector<struk_sparepart> data_struk_sparepart;
-vector<sparepart_data> data_sparepart;
+vector<sparepart_data> data_list_sparepart;
 
 void clear(){ // Membersihkan layar
     system("cls");
@@ -138,6 +144,7 @@ void write_csv_user(){ // menulis data user kembali ke file user_log.csv
     file.close();
     return;
 }
+
 void read_csv_motor(){// Membaca csv motor, list_motor.csv, kondisi_motor_manual.csv, kondisi_motor_automatic.csv
     data_motor.clear();
     ifstream file;
@@ -300,12 +307,14 @@ void write_csv_motor(){// Menulis dari vektor list_motor.csv, kondisi_motor_manu
     file.close();
     return;
 }
-void read_csv_sparepart(){ // Membaca data sparepart dari file  csv ke dalam vektor
-    data_sparepart.clear();
+
+void read_csv_list_sparepart(){ // Membaca csv list_sparepart.csv
+    // Membaca list pendataan sparepart
+    data_list_sparepart.clear();
     ifstream file;
-    file.open("Database/sparepart.csv");
+    file.open("Database/list_sparepart.csv");
     if (!file) {
-        cout << "Gagal membaca data sparepart (sparepart.csv)" << endl;
+        cout << "Gagal membaca data sparepart (list_sparepart.csv)" << endl;
         pause();
         return;
     }
@@ -321,111 +330,226 @@ void read_csv_sparepart(){ // Membaca data sparepart dari file  csv ke dalam vek
         ss >> temp.kilometer;
         ss.ignore();
         ss >> temp.stok_sparepart;
-        data_sparepart.push_back(temp);
+        ss.ignore();
+        data_list_sparepart.push_back(temp);
     }
     file.close();
     return;
 }
-void write_csv_sparepart(){ // Menulis data sparepart dari vektor ke dalam file csv
+void write_csv_list_sparepart(){ // Menulis data sparepart ke dalam file list_sparepart.csv
     ofstream file;
-    file.open("Database/sparepart.csv");
+    file.open("Database/list_sparepart.csv");
     if (!file) {
-        cout << "Gagal membaca data sparepart (sparepart.csv)" << endl;
+        cout << "Gagal membaca data sparepart (list_sparepart.csv)" << endl;
         pause();
         return;
     }
     file << "Nama Sparepart,Tipe Transmisi,Harga,Kilometer,Stok" << endl;
-    for (int i = 0; i < data_sparepart.size(); i++){
-        file << data_sparepart[i].nama_sparepart << "," << data_sparepart[i].tipe_transmisi << "," << data_sparepart[i].harga_sparepart << "," << data_sparepart[i].kilometer << "," << data_sparepart[i].stok_sparepart << endl;
-    }
-    file.close();
-    return;
-}
-void read_csv_service(){ // Membaca data service dari file csv ke dalam vektor
-    data_struk_service.clear();
-    ifstream file;
-    file.open("Database/service.csv");
-    if (!file) {
-        cout << "Gagal membaca data service (service.csv)" << endl;
-        pause();
-        return;
-    }
-    string baris, data;
-    getline(file, baris); // skip header
-    while(getline(file, baris)){
-        stringstream ss(baris);
-        struk_service temp;
-        ss >> temp.id;
-        ss.ignore();
-        while(getline(ss, data, ',')){
-            servis_data temp_servis;
-            temp_servis.nama_servis = data;
-            ss >> temp_servis.harga_servis;
-            ss.ignore();
-            temp.servis.push_back(temp_servis);
-        }
-        ss >> temp.harga_jasa;
-        data_struk_service.push_back(temp);
+    for (int i = 0; i < data_list_sparepart.size(); i++){
+        file << data_list_sparepart[i].nama_sparepart << "," << data_list_sparepart[i].tipe_transmisi << "," 
+        << data_list_sparepart[i].harga_sparepart << "," << data_list_sparepart[i].kilometer << "," << data_list_sparepart[i].stok_sparepart << endl;
     }
     file.close();
     return;
 
 }
-void write_csv_service(){ // Menulis data service dari vektor ke dalam file csv
+
+void read_csv_struk_servis(){
+    // Membaca data "pesanan_servis.csv"
+    data_struk_service.clear();
+    ifstream file;
+    file.open("Database/pesanan_servis.csv");
+    if (!file) {
+        cout << "Gagal membaca data pesanan service (pesanan_servis.csv)" << endl;
+        pause();
+        return;
+    }
+    string baris, data, baris_struk, data_struk;
+    struk_servis temp_struk;
+    vector<servis_data> temp_servis_vector;
+    // skip header
+    getline(file, baris);
+    // membaca data pesanan servis dari csv ke vektor
+    while(getline(file, baris)){
+        stringstream ss(baris);
+        ss >> temp_struk.id; // id struk
+        ss.ignore();
+        getline(ss, temp_struk.username, ','); // username
+        getline(ss, temp_struk.plat, ','); // plat kendaraan
+        getline(ss, temp_struk.status_servis, ','); // status servis
+        getline(ss, temp_struk.status_akun, '\n'); // status akun
+        // vector<servis_data> servis
+        // baca csv detail servis yang dipesan
+        ifstream file_struk;
+        file_struk.open("Database/Struk/Servis/" + to_string(temp_struk.id) + ".csv");
+        if (!file_struk) {
+            cout << "Gagal membaca data servis (Database/Struk/Servis/" + to_string(temp_struk.id) + ".csv)" << endl;
+            pause();
+            file.close();
+            return;
+        }
+        getline(file_struk, baris_struk); // skip header
+        while(getline(file_struk, baris_struk)){
+            stringstream ss_struk(baris_struk);
+            servis_data temp_servis;
+            getline(ss_struk, temp_servis.nama_servis, ','); // nama servis
+            ss_struk >> temp_servis.harga_servis; // harga servis
+            temp_servis_vector.push_back(temp_servis);
+        }
+        file_struk.close();
+        temp_struk.servis = temp_servis_vector;
+
+        // Menyimpan data ke dalam vektor
+        data_struk_service.push_back(temp_struk);
+        
+        //clear temp_servis_vector
+        temp_servis_vector.clear();
+    }
+    file.close();
+    return;
+}   
+void write_csv_struk_servis(){
+    // Hapus folder Database/Struk/Servis
+    system("rmdir /s /q Database/Struk/Servis");
+    // Buat folder Database/Struk/Servis
+    system("mkdir Database/Struk/Servis");
+
+    // Menulis data pesanan_servis.csv
     ofstream file;
-    file.open("Database/service.csv");
+    file.open("Database/pesanan_servis.csv");
     if (!file) {
-        cout << "Gagal membaca data service (service.csv)" << endl;
+        cout << "Gagal membaca data pesanan service (pesanan_servis.csv)" << endl;
         pause();
         return;
     }
-    file << "ID,Servis,Harga Servis,Harga Jasa" << endl;
+    file << "ID,Username,Plat,Status Servis, Status Akun" << endl; // Menulis header
     for (int i = 0; i < data_struk_service.size(); i++){
-        file << data_struk_service[i].id << ",";
-        for (int j = 0; j < data_struk_service[i].servis.size(); j++){
-            file << data_struk_service[i].servis[j].nama_servis << "," << data_struk_service[i].servis[j].harga_servis << ",";
-        }
-        file << data_struk_service[i].harga_jasa << endl;
+        file << data_struk_service[i].id << ","  // id struk
+        << data_struk_service[i].username << "," // username
+        << data_struk_service[i].plat << "," // plat
+        << data_struk_service[i].status_servis // status servis
+        << "," << data_struk_service[i].status_akun << endl;
     }
     file.close();
+    // vector<servis_data> servis
+    // Membuat file berisi data detail servis = "Database/Struk/Servis/{id}.csv"
+    for (int i = 0; i < data_struk_service.size(); i++){
+        file.open("Database/Struk/Servis/" + to_string(data_struk_service[i].id) + ".csv");
+        if (!file) {
+            cout << "Gagal membaca data servis (Database/Struk/Servis/" + to_string(data_struk_service[i].id) + ".csv)" << endl;
+            pause();
+            return;
+        }
+        file << "Nama Servis,Harga Servis" << endl; // Menulis header
+        for (int j = 0; j < data_struk_service[i].servis.size(); j++){
+            file << data_struk_service[i].servis[j].nama_servis << "," << data_struk_service[i].servis[j].harga_servis << endl;
+        }
+        file.close();
+    }
     return;
 }
-// baca data struk service dan struk sparepart
-void read_csv_struk_service(){
-    data_struk_service.clear();
+
+void read_csv_struk_sparepart(){
+    // Membaca data "pesanan_sparepart.csv"
+    data_struk_sparepart.clear();
     ifstream file;
-    // file yang dibuka adalah folder Database/struk/{id_struk}.csv
-    // sparepart,jumlah,harga
-    file.open("Database/struk_service.csv");
+    file.open("Database/pesanan_sparepart.csv");
     if (!file) {
-        cout << "Gagal membaca data struk service (struk_service.csv)" << endl;
+        cout << "Gagal membaca data pesanan sparepart (pesanan_sparepart.csv)" << endl;
         pause();
         return;
     }
-    string baris, data;
-    getline(file, baris); // skip header
+    string baris, data, baris_struk, data_struk;
+    struk_sparepart temp_struk;
+    vector<sparepart_pesanan> temp_sparepart_vector;
+    // skip header
+    getline(file, baris);
     while(getline(file, baris)){
         stringstream ss(baris);
-        struk_service temp;
-        ss >> temp.id;
+        ss >> temp_struk.id; // id struk
         ss.ignore();
-        while(getline(ss, data, ',')){
-            servis_data temp_servis;
-            temp_servis.nama_servis = data;
-            ss >> temp_servis.harga_servis;
-            ss.ignore();
-            temp.servis.push_back(temp_servis);
+        getline(ss, temp_struk.username, ','); // username
+        getline(ss, temp_struk.telepon, ','); // telepon
+        getline(ss, temp_struk.address, ','); // alamat
+        getline(ss, temp_struk.status_akun, '\n'); // status akun
+        // vector<sparepart_pesanan> pesanan
+        // baca csv detail sparepart yang dipesan
+        ifstream file_struk;
+        file_struk.open("Database/Struk/Sparepart/" + to_string(temp_struk.id) + ".csv");
+        if (!file_struk) {
+            cout << "Gagal membaca data sparepart (Database/Struk/Sparepart/" + to_string(temp_struk.id) + ".csv)" << endl;
+            pause();
+            file.close();
+            return;
         }
-        ss >> temp.harga_jasa;
-        data_struk_service.push_back(temp);
+        getline(file_struk, baris_struk); // skip header
+        while(getline(file_struk, baris_struk)){
+            stringstream ss_struk(baris_struk);
+            sparepart_pesanan temp_sparepart;
+            getline(ss_struk, temp_sparepart.nama_sparepart, ','); // nama sparepart
+            ss_struk >> temp_sparepart.jumlah; // jumlah
+            ss_struk.ignore();
+            ss_struk >> temp_sparepart.harga; // harga
+            temp_sparepart_vector.push_back(temp_sparepart);
+        }
+        file_struk.close();
+        temp_struk.pesanan = temp_sparepart_vector;
+        
+        // Menyimpan data ke dalam vektor
+        data_struk_sparepart.push_back(temp_struk);
+
+        //clear temp_sparepart_vector
+        temp_sparepart_vector.clear();
     }
     file.close();
     return;
+}
+void write_csv_struk_sparepart(){
+    // Hapus folder Database/Struk/Sparepart
+    system("rmdir /s /q Database/Struk/Sparepart");
+    // Buat folder Database/Struk/Sparepart
+    system("mkdir Database/Struk/Sparepart");
 
+    // Menulis data pesanan_sparepart.csv
+    ofstream file;
+    file.open("Database/pesanan_sparepart.csv");
+    if (!file) {
+        cout << "Gagal membaca data pesanan sparepart (pesanan_sparepart.csv)" << endl;
+        pause();
+        return;
+    }
+    file << "ID,Username,Telepon,Address,Status Akun" << endl; // Menulis header
+    for (int i = 0; i < data_struk_sparepart.size(); i++){
+        file << data_struk_sparepart[i].id << ","  // id struk
+        << data_struk_sparepart[i].username << "," // username
+        << data_struk_sparepart[i].telepon << "," // telepon
+        << data_struk_sparepart[i].address << "," // alamat
+        << data_struk_sparepart[i].status_akun << endl;
+    }
+    file.close();
+    // vector<sparepart_pesanan> pesanan
+    // Membuat file berisi data detail sparepart = "Database/Struk/Sparepart/{id}.csv"
+    for (int i = 0; i < data_struk_sparepart.size(); i++){
+        file.open("Database/Struk/Sparepart/" + to_string(data_struk_sparepart[i].id) + ".csv");
+        if (!file) {
+            cout << "Gagal membaca data sparepart (Database/Struk/Sparepart/" + to_string(data_struk_sparepart[i].id) + ".csv)" << endl;
+            pause();
+            return;
+        }
+        file << "Nama Sparepart,Jumlah,Harga" << endl; // Menulis header
+        for (int j = 0; j < data_struk_sparepart[i].pesanan.size(); j++){
+            file << data_struk_sparepart[i].pesanan[j].nama_sparepart << "," 
+            << data_struk_sparepart[i].pesanan[j].jumlah << "," 
+            << data_struk_sparepart[i].pesanan[j].harga << endl;
+        }
+        file.close();
+    }
+    return;
 }
 
-// Fungsi Login dan Register
-int login(int try_left, string *global_username, string *global_password){
+
+// Fungsi Login dan Registrasi
+int login(int try_left, string *global_username, string *global_password){ // Binary Search
 /*
 return 0 = login admin
 return 1 = login user
@@ -513,7 +637,7 @@ return 2 = gagal login
     clear();
     return login(try_left-1, global_username, global_password);
 }
-void regist(){ // setelah register, data ditambahkan ke file user_log.csv dan di sort dengan bubble sort
+void regist(){ // setelah regist, data ditambahkan ke file user_log.csv dan di sort dengan bubble sort
     string username_inp, password_inp, telepon_inp, address_inp;
 
     cout << "=============================" << endl;
@@ -523,13 +647,35 @@ void regist(){ // setelah register, data ditambahkan ke file user_log.csv dan di
     cout << "Username: ";
     cin >> username_inp;
     // memastikan username unik dan tidak mengandung spasi
-    if (password_inp.find(",") != string::npos){ 
-        cout << "Username tidak boleh mengandung spasi" << endl;
+    if (username_inp.find(",") != string::npos){
+        cout << "Username tidak boleh mengandung spasi atau koma" << endl;
         pause();
         clear();
         return;
     }
     // Mengecek seluruh data vektor, username harus unik
+    // Cek juga data csv admin_log.csv
+    ifstream file;
+    file.open("Database/admin_log.csv");
+    if (!file) {
+        cout << "Gagal membaca data admin (admin_log.csv)" << endl;
+        pause();
+        clear();
+        return;
+    }
+    string baris, data;
+    getline(file, baris); // skip header
+    while(getline(file, baris)){
+        stringstream ss(baris);
+        getline(ss, data, ',');
+        if (data == username_inp){
+            cout << "Username sudah terdaftar" << endl;
+            pause();
+            clear();
+            return;
+        }
+    }
+    file.close();
     for (int i = 0; i < data_user.size(); i++){
         if (data_user[i].username == username_inp){
             cout << "Username sudah terdaftar" << endl;
@@ -614,7 +760,7 @@ void regist(){ // setelah register, data ditambahkan ke file user_log.csv dan di
 }
 
 
-// Bagian Menu User
+/* Bagian Menu User */
 void add_motor(string username){
     string nama_motor, warna_motor, transmisi_motor, plat_motor;
     bool service;
@@ -1382,7 +1528,7 @@ void hapus_motor(string username){
             // Simpan plat dari motor yang dipilih
             string plat_motor_temp = plat_vector[pilih_motor-1];
 
-            // Jika nomor yang dipilih sedang diservis, tidak boleh hapus
+            // Jika nomor yang dipilih sedang diservis, tidak boleh dihapus, return
             for (int i = 0; i < data_motor.size(); i++){
                 if (data_motor[i].owner == username && data_motor[i].plat == plat_motor_temp){
                     if (data_motor[i].service){
@@ -1400,7 +1546,7 @@ void hapus_motor(string username){
                     data_motor.erase(data_motor.begin() + i);
                 }
             }
-            // Hapus juga data kondisi motor
+            // Hapus data kondisi motor
             for (int i = 0; i < data_kondisi_manual.size(); i++){
                 if (data_kondisi_manual[i].plat == plat_motor_temp){
                     data_kondisi_manual.erase(data_kondisi_manual.begin() + i);
@@ -1421,6 +1567,179 @@ void hapus_motor(string username){
             return;
         }
     }
+}
+
+void edit_akun_user(string *username){
+    // Tampilkan data akun user
+    cout << "=============================" << endl;
+    cout << "       EDIT DATA AKUN" << endl;
+    cout << "=============================" << endl;
+    cout << "Username: " << *username << endl;
+    cout << "----------------------------" << endl;
+    for (int i = 0; i < data_user.size(); i++){
+        if (data_user[i].username == *username){
+            cout << "Username: " << data_user[i].username << endl;
+            cout << "Password: " << data_user[i].password << endl;
+            cout << "No. Telepon: " << data_user[i].telepon << endl;
+            cout << "Alamat: " << data_user[i].address << endl;
+            cout << "----------------------------" << endl;
+        }
+    }
+    // Input data baru
+    string data_username_temp, data_telepon_temp;
+    string inp_username_temp, inp_telepon_temp;
+    for (int i = 0; i < data_user.size(); i++){
+        if (data_user[i].username == *username){
+            string new_username, new_password, new_telepon, new_address;
+            cout << "Username baru: ";
+            // username tidak boleh sama dengan username lain, tapi boleh sama dengan username yang sebelumnya
+            cin.ignore();
+            getline(cin, new_username);
+            inp_username_temp = new_username;
+            for (int i = 0; i < data_user.size(); i++){
+                // Bandingkan tanpa memperhatikan spasi
+                data_username_temp = data_user[i].username;
+                // Hapus spasi dari string username
+                data_username_temp.erase(remove(data_username_temp.begin(), data_username_temp.end(), ' '), data_username_temp.end());
+                inp_username_temp.erase(remove(inp_username_temp.begin(), inp_username_temp.end(), ' '), inp_username_temp.end());
+                if (data_username_temp.compare(inp_username_temp) == 0 && data_user[i].username != *username){
+                    cout << "Username sudah terdaftar" << endl;
+                    cout << "Username baru: ";
+                    getline(cin, new_username);
+                    inp_username_temp = new_username;
+                    i = -1;
+                }
+            }
+            cout << "Password baru: ";
+            getline(cin, new_password);
+            cout << "No. Telepon baru: ";
+            // telepon boleh sama dengan telepon yang sebelumnya, tapi tidak boleh sama dengan telepon yang lain
+            getline(cin, new_telepon);
+            for (int i = 0; i < data_user.size(); i++){
+                if (data_user[i].telepon == new_telepon && data_user[i].username != *username){
+                    cout << "No. Telepon sudah terdaftar" << endl;
+                    cout << "No. Telepon baru: ";
+                    getline(cin, new_telepon);
+                    i = -1;
+                }
+            }
+            cout << "Alamat baru: ";
+            getline(cin, new_address);
+
+            // Update Data Vektor User
+            user_data new_user;
+            new_user.username = new_username;
+            new_user.password = new_password;
+            new_user.telepon = new_telepon;
+            new_user.address = new_address;
+            // Hapus data user yang dipilih dari vektor
+            data_user.erase(data_user.begin() + i);
+            // Tambahkan data vektor yang baru ke csv
+            data_user.push_back(new_user);
+
+            // Sort data user dengan bubble sort, ascending berdasarkan username
+            for (int i = 0; i < data_user.size(); i++){
+                for (int j = 0; j < data_user.size()-1; j++){
+                    if (data_user[j].username > data_user[j+1].username){
+                        user_data temp = data_user[j];
+                        data_user[j] = data_user[j+1];
+                        data_user[j+1] = temp;
+                    }
+                }
+            }
+
+            // Update vektor list_motor dengan username lama menjadi username baru
+            for (int i = 0; i < data_motor.size(); i++){
+                if (data_motor[i].owner == *username){
+                    data_motor[i].owner = new_username;
+                }
+            }
+            /* update username vektor sparepart status_user active*/
+            for (int i = 0; i < data_struk_sparepart.size(); i++){
+                if (data_struk_sparepart[i].username == *username && data_struk_sparepart[i].status_akun == "active"){
+                    data_struk_sparepart[i].username = new_username;
+                }
+            }
+
+            // Update csv 
+            write_csv_user();
+            read_csv_user();
+            write_csv_motor();
+            read_csv_motor();
+            write_csv_struk_sparepart();
+            read_csv_struk_sparepart();
+
+            // Update username global
+            *username = new_username;
+
+            cout << "Data akun berhasil diubah!" << endl;
+            pause();
+            clear();
+            return;
+        }
+    }
+
+}
+
+void hapus_akun_user(string username){
+    // // Cuma bisa hapus akun ketika tidak ada motor yang sedang servis
+    // for (int i = 0; i < data_motor.size(); i++){
+    //     if (data_motor[i].owner == username){
+    //         if (data_motor[i].service){
+    //             clear();
+    //             cout << "Terdapat motor yang sedang diservis, tidak bisa hapus akun" << endl;
+    //             pause();
+    //             clear();
+    //             return;
+    //         }
+    //     }
+    // }
+    // // Hapus data user yang dipilih dari vektor
+    // for (int i = 0; i < data_user.size(); i++){
+    //     if (data_user[i].username == username){
+    //         data_user.erase(data_user.begin() + i);
+    //     }
+    // }
+    // // Hapus data motor yang dipilih dari vektor
+    // for (int i = 0; i < data_motor.size(); i++){
+    //     // cara  data motor yang dimiliki user
+    //     if (data_motor[i].owner == username){
+    //         /// Hapus  data kondisi motor
+    //         if (data_motor[i].transmisi == "manual"){
+    //             for (int i = 0; i < data_kondisi_manual.size(); i++){
+    //                 if (data_kondisi_manual[i].plat == data_motor[i].plat){
+    //                     data_kondisi_manual.erase(data_kondisi_manual.begin() + i);
+    //                 }
+    //             }
+    //         }
+    //         if (data_motor[i].transmisi == "automatic"){
+    //             for (int i = 0; i < data_kondisi_automatic.size(); i++){
+    //                 if (data_kondisi_automatic[i].plat == data_motor[i].plat){
+    //                     data_kondisi_automatic.erase(data_kondisi_automatic.begin() + i);
+    //                 }
+    //             }
+    //         }
+    //         // Hapus data motor yang dimiliki user
+    //         data_motor.erase(data_motor.begin() + i);
+    //     }
+    // }
+
+    // // Hapus data struk sparepart dengan username sama
+    // for (int i = 0; i < data_struk_sparepart.size(); i++){
+    //     if (data_struk_sparepart[i].user == username){
+    //         data_struk_sparepart.erase(data_struk_sparepart.begin() + i);
+    //     }
+    // }
+
+    // // Update csv data user
+    // write_csv_user();
+    // read_csv_user();
+    // write_csv_motor();
+    // read_csv_motor();
+    // write_csv_struk_servis();
+    // read_csv_struk_servis();
+    // write_csv_struk_sparepart();
+    // read_csv_struk_sparepart();
 }
 
 // Fungsi-fungsi menu
@@ -1535,13 +1854,18 @@ int menu_data_akun(string global_username){
             {
             case 1:
                 // Edit Data Akun
+                clear();
+                edit_akun_user(&global_username);
                 break;
             case 2:
                 // Hapus Data Akun
+                clear();
+                hapus_akun_user(global_username);
                 return 1; // Logout akun
                 break;
             case 3:
                 // Kembali (Menu User)
+                clear();
                 return 0; // Tidak Logout
                 break;
             }
@@ -1608,7 +1932,7 @@ void menu_user_sparepart(string global_username){
 }
 
 void menu_user(string global_username){
-    int pilih;
+    int pilih, result;
     while (true) {
         cout << "=============================" << endl;
         cout << "          MENU USER" << endl;
@@ -1641,7 +1965,10 @@ void menu_user(string global_username){
             case 2:
                 // Menu Data Akun
                 clear();
-                menu_data_akun(global_username);
+                result = menu_data_akun(global_username);
+                if (result == 1){ // Akun terhapus, logout
+                    return;
+                }
                 break;
             case 3:
                 // Jadwal Perawatan Motor
@@ -1671,12 +1998,49 @@ void menu_user(string global_username){
     }
 }
 
+
 // Menu-Menu Admin
 void edit_data_admin(string global_username){
-    /* 
-    1. Tampilkan Username dan Password yang ada
-    2. Input Username dan Pasword baru
-    */
+    string new_username, new_password;
+    cout << "=============================" << endl;
+    cout << "     EDIT DATA ADMIN" << endl;
+    cout << "=============================" << endl;
+    cout << "Username: " << global_username << endl;
+    cout << "----------------------------" << endl;
+    cout << "Masukkan Username Baru: ";
+    cin >> new_username;
+    while (cin.fail()) {
+        cin.clear();
+        cin.ignore(999, '\n');
+        cout << "Input tidak valid. Silahkan masukkan username baru." << endl;
+        cout << "Masukkan Username Baru: ";
+        cin >> new_username;
+    }
+    cout << "Masukkan Password Baru: ";
+    cin >> new_password;
+    while (cin.fail()) {
+        cin.clear();
+        cin.ignore(999, '\n');
+        cout << "Input tidak valid. Silahkan masukkan password baru." << endl;
+        cout << "Masukkan Password Baru: ";
+        cin >> new_password;
+    }
+    
+    // Update admin data pada admin_log.csv
+    ofstream file;
+    file.open("Database/admin_log.csv");
+    if(!file.is_open()){
+        cout << "Gagal Membaca Data Admin" << endl;
+        return;
+    }
+    file << "username,password\n";
+    file << new_username << "," << new_password << "\n";
+    file.close();
+
+    cout << "Data Admin berhasil diupdate, Silahkan Login Ulang." << endl;
+    pause();
+    clear();
+    return;
 }
 
 void admin_servis(string global_username){
@@ -1725,6 +2089,9 @@ void menu_admin(string global_username){
             {
             case 1:
                 // Edit Data Admin
+                clear();
+                edit_data_admin(global_username);
+                return;
                 break;
             case 2:
                 // Layanan Servis (Admin)
@@ -1741,10 +2108,107 @@ void menu_admin(string global_username){
     }
 }
 
+
+// Fungsi Main
 int main(){
-    // Membacca data csv di awal
+    //tes write file
+    write_csv_user();
+    write_csv_motor();
+    write_csv_struk_servis();
+    write_csv_struk_sparepart();
+    write_csv_list_sparepart();
+
+
+
+    // Membaca data csv di awal
     read_csv_user();
     read_csv_motor();
+    read_csv_struk_servis();
+    read_csv_struk_sparepart();
+    read_csv_list_sparepart();
+
+    // tes output semua data vektor 
+    // cout << "Data User:" << endl;
+    // for (const auto& user : data_user) {
+    //     cout << "Username: " << user.username << endl;
+    //     cout << "Password: " << user.password << endl;
+    //     cout << "Telepon: " << user.telepon << endl;
+    //     cout << "Alamat: " << user.address << endl;
+    //     cout << "------------------------" << endl;
+    // }
+    // cout << "Data Motor:" << endl;
+    // for (const auto& motor : data_motor) {
+    //     cout << "Pemilik: " << motor.owner << endl;
+    //     cout << "Nama Motor: " << motor.nama_motor << endl;
+    //     cout << "Warna Motor: " << motor.warna_motor << endl;
+    //     cout << "Transmisi: " << motor.transmisi << endl;
+    //     cout << "Plat: " << motor.plat << endl;
+    //     cout << "Jarak Tempuh: " << motor.jarak_tempuh << endl;
+    //     cout << "Service: " << (motor.service ? "Yes" : "No") << endl;
+    //     cout << "------------------------" << endl;
+    // }
+    // cout << "Data Kondisi Manual:" << endl;
+    // for (const auto& kondisi : data_kondisi_manual) {
+    //     cout << "Plat: " << kondisi.plat << endl;
+    //     cout << "Ban Belakang: " << kondisi.ban_belakang << endl;
+    //     cout << "Ban Depan: " << kondisi.ban_depan << endl;
+    //     cout << "Busi: " << kondisi.busi << endl;
+    //     cout << "Gear: " << kondisi.gear << endl;
+    //     cout << "Kampas Kopling: " << kondisi.kampas_kopling << endl;
+    //     cout << "Kampas Rem: " << kondisi.kampas_rem << endl;
+    //     cout << "Minyak Rem: " << kondisi.minyak_rem << endl;
+    //     cout << "Oli Mesin: " << kondisi.oli_mesin << endl;
+    //     cout << "Rantai: " << kondisi.rantai << endl;
+    //     cout << "------------------------" << endl;
+    // }
+    // cout << "Data Kondisi Automatic:" << endl;
+    // for (const auto& kondisi : data_kondisi_automatic) {
+    //     cout << "Plat: " << kondisi.plat << endl;
+    //     cout << "Ban Belakang: " << kondisi.ban_belakang << endl;
+    //     cout << "Ban Depan: " << kondisi.ban_depan << endl;
+    //     cout << "Busi: " << kondisi.busi << endl;
+    //     cout << "Kampas Rem: " << kondisi.kampas_rem << endl;
+    //     cout << "Minyak Rem: " << kondisi.minyak_rem << endl;
+    //     cout << "Oli Gardan: " << kondisi.oli_gardan << endl;
+    //     cout << "Oli Mesin: " << kondisi.oli_mesin << endl;
+    //     cout << "Roller: " << kondisi.roller << endl;
+    //     cout << "Van Belt: " << kondisi.van_belt << endl;
+    //     cout << "------------------------" << endl;
+    // }
+    // cout << "Data Struk Service:" << endl;
+    // for (const auto& struk : data_struk_service) {
+    //     cout << "ID: " << struk.id << endl;
+    //     cout << "Plat: " << struk.plat << endl;
+    //     cout << "Status: " << struk.status << endl;
+    //     cout << "Servis:" << endl;
+    //     for (const auto& servis : struk.servis) {
+    //         cout << "Nama Servis: " << servis.nama_servis << endl;
+    //         cout << "Harga Servis: " << servis.harga_servis << endl;
+    //     }
+    //     cout << "------------------------" << endl;
+    // }
+    // cout << "Data Struk Sparepart:" << endl;
+    // for (const auto& struk : data_struk_sparepart) {
+    //     cout << "ID: " << struk.id << endl;
+    //     cout << "User: " << struk.user << endl;
+    //     cout << "Pesanan:" << endl;
+    //     for (const auto& pesanan : struk.pesanan) {
+    //         cout << "Nama Sparepart: " << pesanan.nama_sparepart << endl;
+    //         cout << "Jumlah: " << pesanan.jumlah << endl;
+    //         cout << "Harga: " << pesanan.harga << endl;
+    //     }
+    //     cout << "------------------------" << endl;
+    // }
+    // cout << "Data List Sparepart:" << endl;
+    // for (const auto& sparepart : data_list_sparepart) {
+    //     cout << "Nama Sparepart: " << sparepart.nama_sparepart << endl;
+    //     cout << "Tipe Transmisi: " << sparepart.tipe_transmisi << endl;
+    //     cout << "Harga Sparepart: " << sparepart.harga_sparepart << endl;
+    //     cout << "Kilometer: " << sparepart.kilometer << endl;
+    //     cout << "Stok Sparepart: " << sparepart.stok_sparepart << endl;
+    //     cout << "------------------------" << endl;
+    // }
+    // pause();
 
     // Variabel lokal main
     string global_username, global_password;
@@ -1755,18 +2219,15 @@ int main(){
         switch(pilih){
             case 1: // Login
                 clear();
-                // Menu Admin
                 log_result = login(3, &global_username, &global_password);
-                if (log_result == 0){
-                    cout << "Menu Admin" << endl;
+                if (log_result == 0){ // Menu Admin
+                    menu_admin(global_username);
                 }
-                // Menu User
-                else if (log_result == 1){
+                else if (log_result == 1){ // Menu User
                     menu_user(global_username);
                 }
-                else if (log_result == 2){
+                else if (log_result == 2){ // Gagal Login
                     clear();
-                    continue;
                 }
                 break;
             case 2: // Register
