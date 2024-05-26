@@ -1,0 +1,11 @@
+ID,Username,Plat,Status Servis,Status Akun
+0,NewUser123,KT 1234 AB,done,active
+1,NewUser123,KT 5555 AB,done,active
+2,Euangelion,KT 2538 AB,ongoing,active
+3,Euangelion,KT 7685 AB,done,active
+4,Lawliet123,KT 1250 AB,done,active
+5,Lawliet123,KT 2233 AB,done,active
+6,Mystogan,KT 4567 AB,done,deleted
+7,Mystogan,KT 4567 AB,ongoing,active
+8,Deleted,KT 1234 AB,done,deleted
+9,NewUser123,KT 5555 XB,done,active
