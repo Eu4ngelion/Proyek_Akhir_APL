@@ -1,6 +1,5 @@
 ==== KREDENSIL AKUN ====
-> USER
-     USERNAME : PASSWORD
+> PENGGUNA
 1. username   : username
 2. Euangelion : Euangelion
 3. Mystogan   : Mystogan
