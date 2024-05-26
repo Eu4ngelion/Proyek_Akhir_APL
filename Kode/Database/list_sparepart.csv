@@ -1,0 +1,13 @@
+nama sparepart,tipe transmisi,harga sparepart,kilometer,stok
+ban belakang,keduanya,200000,20000,10
+ban depan,keduanya,190000,20000,10
+busi,keduanya,30000,10000,10
+gear,manual,120000,10000,10
+kampas kopling,manual,98000,24000,10
+kampas rem,keduanya,70000,10000,10
+minyak rem,keduanya,60000,10000,10
+oli gardan,automatic,20000,4000,10
+oli mesin,keduanya,80000,2000,10
+rantai,manual,65000,10000,10
+roller,automatic,40000,20000,10
+van belt,automatic,125000,15000,10
